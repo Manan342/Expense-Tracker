@@ -1,0 +1,15 @@
+.expense-item{
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+}
+.delete-btn{
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 3px;
+    background-color: darkgray;
+}
