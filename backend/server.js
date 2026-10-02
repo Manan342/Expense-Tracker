@@ -1,9 +1,11 @@
-const cors = require("cors");
+
 const express = require("express");
+const cors = require("cors");
 const app = express();
 
 
 app.use(cors());
+app.use(express.json());
 
 
 const expenses = [
@@ -26,6 +28,12 @@ app.get("/" , function(req,res){
 
 app.get("/expenses" , function(req,res){
     res.json(expenses);
+});
+
+app.post("/expenses",function(req,res){
+    const expense =req.body;
+    expenses.push(expense);
+    res.json(expense);
 });
 
 
