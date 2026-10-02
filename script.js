@@ -8,9 +8,7 @@ const emptyMessage = document.getElementById("emptyMessage");
 
 
 
-//for localstorage
-const savedExpenses = JSON.parse(localStorage.getItem("expenses"))||[];
-const expenses = [...savedExpenses];  // ... means copy all saved expenses to expenses.
+const expenses = [];
 const addBtn = document.getElementById("addBtn");
 
 
@@ -25,6 +23,31 @@ amount.addEventListener("keydown",function(event){
 
 
 let total = 0;
+
+fetch("http://localhost:3000/expenses")
+    .then(function(response) {
+        return response.json();
+    })
+    
+    
+    .then(function(data) {
+
+    console.log("Data from backend:", data);
+
+    data.forEach(function(expense) {
+        console.log("Expense:", expense);
+        console.log("Amount:", expense.amount, typeof expense.amount);
+            expenses.push(expense);
+            total += expense.amount;
+            displayExpense(expense);
+        });
+
+        balance.textContent = `₹${total}`;
+    })
+    .catch(function(error) {
+        console.log("Error:", error);
+    });
+
 let editedExpense = null;
 
 
@@ -170,6 +193,34 @@ addBtn.addEventListener("click",function(){
         amount: Number(amount.value)
         
     }
+
+
+
+fetch("http://localhost:3000/expenses", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        id: Date.now(),
+        title: "Test Food",
+        category: "Food",
+        amount: 500
+    })
+})
+.then(function(response) {
+    return response.json();
+})
+.then(function(data) {
+    console.log(data);
+})
+.catch(function(error) {
+    console.log(error);
+});
+
+
+
+
     
     
     expenses.push(expense);
