@@ -1,3 +1,4 @@
+
 const title = document.getElementById("title");
 const category = document.getElementById("category");
 const amount = document.getElementById("amount");
@@ -51,16 +52,6 @@ fetch("http://localhost:3000/expenses")
 let editedExpense = null;
 
 
-savedExpenses.forEach(function(expense){
-    total += expense.amount;
-    displayExpense(expense);
-});
-
-
-
-balance.textContent = `₹${total}`;
-
-
 
 
 
@@ -92,23 +83,38 @@ function displayExpense(expense) {
             li.appendChild(editBtn);
         
         deleteBtn.addEventListener("click",function(){
-        
-            const index = expenses.findIndex(function(item){
-                    return item.id === expense.id;
-            });
+
+            fetch('http://localhost:3000/expenses/${expenses.id}',{
+                method:"DELETE"
+            })
+            .then(function(response){
+                return response.json();
+            })
+            .then(function(data){
+                console.log(data);
+                const index = expenses.findIndex(function(item){
+                        return item.id === expense.id;
+                });
+            
                     
                 expenses.splice(index,1);
                 total -= expense.amount;
-                localStorage.setItem("expenses",JSON.stringify(expenses));
                 balance.textContent = `₹${total}`;
         
                 li.remove();
                 if(expenses.length === 0){
                 emptyMessage.style.display = "block";
                 }
+            })
+            .catch(function(error){
+                console.log("delete error: ", error);
+            });
+
             
         });
 
+        
+        
         editBtn.addEventListener("click",function(){
 
             title.value = expense.title;
@@ -136,6 +142,8 @@ function displayExpense(expense) {
 
 addBtn.addEventListener("click",function(){
 
+    console.log("upadate/add but")
+
     if(title.value ===""|| amount.value === "" || category.value ===""){
         return;
     }
@@ -145,25 +153,41 @@ addBtn.addEventListener("click",function(){
         //save the old amount first
         const oldAmount = editedExpense.amount;
 
+        const updatedExpense = {
+            title: title.value,
+            category: category.value,
+            amount: Number(amount.value)
+        };
+        fetch(`http://localhost:3000/expenses/${editedExpense.id}`,{
+
+            method: "PUT",
+            headers: {
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(updatedExpense)
+        })
+        .then(function(response){
+            return response.json();
+        })
+        .then(function(data){
+
+        
 
         //Update expense data
-        editedExpense.title = title.value;   
-        editedExpense.category = category.value;
-        editedExpense.amount = Number(amount.value);
+        editedExpense.title = data.title;   
+        editedExpense.category = data.category;
+        editedExpense.amount = data.amount;
         
 
         // Add new amount to total
-        total = total - oldAmount + editedExpense.amount;
+        total = total - oldAmount + data.amount;
 
         
         //update only the text not, the whole <li>
         editedExpense.textElement.textContent =
-                `${editedExpense.title} | ${editedExpense.category} | ₹${editedExpense.amount}`;
+                `${data.title} | ${data.category} | ₹${data.amount}`;
         
         
-        
-        //Update localStorage
-        localStorage.setItem("expenses",JSON.stringify(expenses));
 
         
         //Update Balance
@@ -179,7 +203,10 @@ addBtn.addEventListener("click",function(){
         title.value = "";
         amount.value = "";
         category.value = "";
-        
+        })
+        .catch(function(error){
+            console.log("Update error:",error);
+        }); 
         return;
     }
 
@@ -194,46 +221,34 @@ addBtn.addEventListener("click",function(){
         
     }
 
-
-
 fetch("http://localhost:3000/expenses", {
     method: "POST",
     headers: {
         "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-        id: Date.now(),
-        title: "Test Food",
-        category: "Food",
-        amount: 500
-    })
+    body: JSON.stringify(expense)
 })
 .then(function(response) {
     return response.json();
 })
 .then(function(data) {
-    console.log(data);
+    console.log("Backend received:", data);
+ 
+ 
+    expenses.push(data);
+
+    total += data.amount;
+
+    balance.textContent = `₹${total}`;
+
+    displayExpense(data);
+
+
 })
 .catch(function(error) {
-    console.log(error);
+    console.log("Error:", error);
 });
 
-
-
-
-    
-    
-    expenses.push(expense);
-    
-
-    localStorage.setItem("expenses",JSON.stringify(expenses));
-    
-    total += (expense.amount); 
-    balance.textContent = `₹${total}`;  
-
-    displayExpense(expense);
-    
-    
     
     
     title.value = "";
@@ -245,17 +260,6 @@ fetch("http://localhost:3000/expenses", {
 
 
 
-//connecting backend with frontend 
-fetch("http://localhost:3000/expenses")
-    .then(function(response){
-        return response.json();
-    })
-    .then(function(data){
-        console.log(data);
-    })
-    .catch(function(error){
-        console.log(error);
-    });
-    
+
 
 
