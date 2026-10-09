@@ -3,6 +3,7 @@ process.env.MONGO_URI
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const Expense = require("./models/Expense");
 const app = express();
 
 
@@ -21,34 +22,26 @@ app.use(cors());
 app.use(express.json());
 
 
-const expenses = [
-    {
-        id: 1,
-        title: "Food",
-        category: "Food",
-        amount: 500
-    },
-    {
-        id: 2,
-        title: "Movie",
-        category: "Entertainment",
-        amount: 300
-    }
-];
 
-app.get("/" , function(req,res){
-    res.send("hello manan");
-});
-
-app.get("/expenses" , function(req,res){
+app.get("/expenses" , async function(req,res){
+    
+    const expenses = await Expense.find();
+    
     res.json(expenses);
+
 });
 
-app.post("/expenses",function(req,res){
-    const expense =req.body;
-    expenses.push(expense);
+
+
+app.post("/expenses",async function(req,res){
+    
+    const expense =await Expense.create(req.body);
+    
     res.json(expense);
+
 });
+
+
 
 
 app.listen(3000,function(){
@@ -59,38 +52,59 @@ app.listen(3000,function(){
 
 
 // for delete api 
-app.delete("/expenses/:id",function(req,res){
-    const id = Number(req.params.id);
-    const index = expenses.findIndex(function(expense){
-        return expense.id === id ;
-
-    });
-
-    expenses.splice(index,1);
+app.delete("/expenses/:id",async function(req,res){
     
-    res.json({ message: "Expense deleted"});
+    const id = Number(req.params.id);
+   
+    const deletedExpense = await Expense.findOneAndDelete({id: id});
+
+    if (deletedExpense === null){
+        return res.status(404).json({
+            message: "Expense not found"
+        });
+    }
+
+    res.json({ 
+            message: "Expense deleted",
+            expense: deletedExpense
+        });
 });
 
 
 
 //for edit api
-app.put("/expenses/:id",function(req,res){
-        
+app.put("/expenses/:id",async function(req,res){
+      
+    try{
         const id = Number(req.params.id);
         
-        const index = expenses.findIndex(function(expense){
-            return expense.id === id
-        });
+       const updatedExpense = await Expense.findOneAndUpdate(
 
-        if(index === -1){
+            {id:id},
+            {
+                title:req.body.title,
+                category:req.body.category,
+                amount:Number(req.body.amount)
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+       );
+
+        if(!updatedExpense){
             return res.status(404).json({
                 message: "Expense not found"
             });
         }
 
-        expenses[index].title = req.body.title;
-        expenses[index].category = req.body.category;
-        expenses[index].amount = req.body.amount;
+        res.json(updatedExpense);
+    }
+    catch(error){
+    console.log("Update error:",error);
 
-        res.json(expenses[index]);
+    res.status(500).json({
+        message: "Failed to update expense"
+    });
+    }
 });
